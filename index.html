@@ -1,7 +1,27 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
+<head>
+    <title>Bingo Game</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(5, 50px); gap: 10px; justify-content: center; margin-top: 20px; }
+        .cell { width: 50px; height: 50px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .marked { background-color: #4CAF50; color: white; }
+    </style>
+</head>
 <body>
-    <h1>Welcome to Bingo!</h1>
-    <p>Use the bot in Telegram to play.</p>
+    <h1>Bingo Board</h1>
+    <div class="grid" id="bingoBoard">
+        <!-- Cells will be generated here -->
+    </div>
+    <script>
+        const board = document.getElementById('bingoBoard');
+        for (let i = 0; i < 25; i++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerText = Math.floor(Math.random() * 75) + 1;
+            board.appendChild(cell);
+        }
+    </script>
 </body>
 </html>
