@@ -1,27 +1,800 @@
- <!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Bingo Game</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Elite</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(5, 50px); gap: 10px; justify-content: center; margin-top: 20px; }
-        .cell { width: 50px; height: 50px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .marked { background-color: #4CAF50; color: white; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            margin: 0;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+        
+        /* Top Navigation Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            margin-bottom: 12px;
+        }
+        .app-title {
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 16px;
+        }
+        .wallet-badge {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #000;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        /* Views Container */
+        .view-section {
+            display: none;
+        }
+        .view-section.active {
+            display: block;
+        }
+
+        /* Stake Lobby Styles */
+        .lobby-header {
+            font-size: 18px;
+            font-weight: 800;
+            color: #22d3ee;
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+        .stake-table-header {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1.2fr 1fr;
+            background: rgba(6, 182, 212, 0.1);
+            padding: 10px 8px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+        .stake-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1.2fr 1fr;
+            align-items: center;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 8px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: 0.2s;
+        }
+        .stake-row:hover {
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+        .stake-info {
+            text-align: left;
+            padding-left: 4px;
+        }
+        .stake-amount {
+            font-weight: 800;
+            font-size: 14px;
+            color: #fff;
+        }
+        .stake-bonus {
+            font-size: 10px;
+            color: #22d3ee;
+            margin-top: 2px;
+        }
+        .status-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b; 
+        }
+        .status-text.timer {
+            color: #f59e0b; 
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .win-amount {
+            font-size: 12px;
+            font-weight: 700;
+            color: #34d399;
+        }
+        .join-btn {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            font-weight: 800;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);
+            transition: 0.2s;
+        }
+        .join-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Cartela Grid Selector */
+        .cartela-grid-container {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            max-width: 400px;
+            margin: 0 auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        .cartela-btn {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            color: #cbd5e1;
+            font-weight: 700;
+            font-size: 12px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .cartela-btn:hover {
+            border-color: #06b6d4;
+            color: #22d3ee;
+            transform: translateY(-2px);
+        }
+        .cartela-btn:active {
+            transform: scale(0.92);
+            background: #06b6d4;
+            color: #000;
+        }
+
+        /* Layout Container for Card & Master 1-99 Board side-by-side */
+        .game-layout {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        .card-column {
+            flex: 1;
+            min-width: 260px;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+        .board-column {
+            flex: 1.2;
+            min-width: 260px;
+            max-width: 340px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 14px;
+            padding: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Master 1-99 Number Board Grid */
+        .master-board-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #22d3ee;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .master-board-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .master-cell {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .master-cell.drawn {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #000;
+            border-color: #22d3ee;
+            box-shadow: 0 0 6px rgba(6, 182, 212, 0.5);
+        }
+
+        /* Preview Card View Styles */
+        .preview-card-container {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 16px;
+            padding: 10px;
+            max-width: 300px;
+            margin: 0 auto 12px auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+        .btn-goback {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            background: #334155;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-confirm {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+            transition: 0.2s;
+        }
+        .btn-goback:active, .btn-confirm:active {
+            transform: scale(0.95);
+        }
+
+        /* Waiting Room / Countdown Screen Styles */
+        .waiting-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 320px;
+            margin: 20px auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        .waiting-timer {
+            font-size: 38px;
+            font-weight: 900;
+            font-family: monospace;
+            color: #f59e0b;
+            margin: 15px 0;
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Active Game Board View */
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            margin-bottom: 6px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+        #calledDisplay {
+            font-size: 14px;
+            font-weight: 800;
+            color: #22d3ee;
+            margin: 4px 0 10px 0;
+        }
+        .header-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            max-width: 260px;
+            margin: 4px auto 2px auto;
+            font-weight: 800;
+            color: #06b6d4;
+            font-size: 13px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+        .cell {
+            background: #0f172a;
+            border: 2px solid #1e293b;
+            border-radius: 6px;
+            aspect-ratio: 1;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .cell.marked {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #000;
+            border-color: #22d3ee;
+            box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+        }
+        .bingo-claim-btn {
+            margin-top: 15px;
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            width: 85%;
+            max-width: 320px;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5);
+            letter-spacing: 1px;
+            transition: 0.2s;
+        }
+        .bingo-claim-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #090d16;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .nav-item.active {
+            color: #22d3ee;
+        }
+        .nav-item span {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
-    <h1>Bingo Board</h1>
-    <div class="grid" id="bingoBoard">
-        <!-- Cells will be generated here -->
+
+    <!-- Top Navigation Bar -->
+    <div class="top-bar">
+        <span class="app-title">🎯 BINGO ELITE</span>
+        <div class="wallet-badge" id="walletBalance">ETB 0.00</div>
     </div>
+
+    <!-- VIEW 1: Stake Lobby Selection -->
+    <div id="lobbyView" class="view-section active">
+        <div class="lobby-header">Please Choose Your Stake</div>
+        
+        <div class="stake-table-header">
+            <div>Stake</div>
+            <div>Status</div>
+            <div>Prize Pool</div>
+            <div>Join</div>
+        </div>
+
+        <div id="stakeListContainer"></div>
+    </div>
+
+    <!-- VIEW 2: Pick a Cartela Selector -->
+    <div id="selectorView" class="view-section">
+        <button class="back-btn" onclick="showLobby()">← Back to Stakes</button>
+        <div id="selectedStakeBanner" style="color: #22d3ee; font-weight: bold; margin-bottom: 4px; font-size: 15px;">Stake: 10 Birr</div>
+        <div id="selectorTimerBanner" style="color: #f59e0b; font-family: monospace; font-weight: bold; font-size: 13px; margin-bottom: 8px; display:none;">Starts in: 00:00</div>
+        <p style="font-size: 13px; color: #94a3b8; margin: 5px 0;">Choose your Cartela (1 - 150):</p>
+        <div class="cartela-grid-container" id="cartelaContainer"></div>
+    </div>
+
+    <!-- VIEW 3: Card Confirmation / Preview View -->
+    <div id="previewView" class="view-section">
+        <button class="back-btn" onclick="showSelector()">← Choose Another Card</button>
+        <div id="previewStakeBadge" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.4); color: #22d3ee; padding: 8px; border-radius: 12px; font-weight: 800; max-width: 340px; margin: 0 auto 12px auto; font-size: 14px;">10 Birr Per Card</div>
+        
+        <div class="preview-card-container">
+            <h3 id="previewCardTitle" style="margin: 0 0 6px 0; color: #22d3ee; font-size: 14px;">Card No. 7</h3>
+            <div class="header-row" style="margin-top: 0;">
+                <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
+            </div>
+            <div class="grid" id="previewGrid"></div>
+        </div>
+
+        <div class="preview-actions">
+            <button class="btn-goback" onclick="showSelector()">Go Back</button>
+            <button class="btn-confirm" onclick="confirmCardsAndJoin()">Confirm Cards</button>
+        </div>
+    </div>
+
+    <!-- VIEW 4: Waiting Room / Countdown Screen -->
+    <div id="waitingView" class="view-section">
+        <button class="back-btn" onclick="showSelector()">← Change Card</button>
+        <div class="waiting-card">
+            <h3 style="color: #22d3ee; margin-top: 0;">⏳ Game Starting Soon</h3>
+            <p style="font-size: 13px; color: #94a3b8;">Your card has been locked in. Waiting for the countdown timer to expire before the game begins.</p>
+            <div class="waiting-timer" id="waitingCountdownDisplay">01:00</div>
+            <div id="waitingCardInfo" style="font-size: 14px; font-weight: bold; color: #fff;">Cartela #7 (10 Birr Stake)</div>
+        </div>
+    </div>
+
+    <!-- VIEW 5: The Active Game Board with Side-by-Side Master 1-99 Board -->
+    <div id="gameView" class="view-section">
+        <button class="back-btn" onclick="exitGameSession()">← Exit to Lobby</button>
+        <h3 id="cardTitle" style="margin: 2px 0; color: #22d3ee; font-size: 14px;">Cartela #1</h3>
+        
+        <div id="calledDisplay">Latest Called: None</div>
+
+        <div class="game-layout">
+            <!-- Left Column: Player's Card -->
+            <div class="card-column">
+                <div class="header-row">
+                    <div>B</div><div>I</div><div>N</div><div>G</div><div>O</div>
+                </div>
+                <div class="grid" id="bingoGrid"></div>
+            </div>
+
+            <!-- Right Column: Master 1-99 Numbers Board -->
+            <div class="board-column">
+                <div class="master-board-title">Master Board (1 - 99)</div>
+                <div class="master-board-grid" id="masterBoardGrid"></div>
+            </div>
+        </div>
+        
+        <!-- BINGO Claim Button -->
+        <button class="bingo-claim-btn" onclick="claimBingo()">🎉 BINGO! 🎉</button>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="showLobby()"><span>🏠</span>Home</button>
+        <button class="nav-item" onclick="alert('Wallet integration coming soon!')"><span>💳</span>Wallet</button>
+        <button class="nav-item" onclick="alert('Bonus rewards active!')"><span>🎁</span>Bonus</button>
+        <button class="nav-item" onclick="alert('Support contact: Telegram @admin')"><span>💬</span>Contact</button>
+        <button class="nav-item" onclick="alert('Leaderboard coming soon!')"><span>🏆</span>Leaderboard</button>
+    </div>
+
     <script>
-        const board = document.getElementById('bingoBoard');
-        for (let i = 0; i < 25; i++) {
-            let cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.innerText = Math.floor(Math.random() * 75) + 1;
-            board.appendChild(cell);
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentGridData = [];
+        let chosenStake = 10;
+        let pendingCartelaId = 1;
+        let playerJoinedStakes = {};
+        let gameInterval = null;
+
+        const stakesData = [
+            { amount: 10, bonus: "🎁 Row 4 (+100 ETB)", timeLeft: null, timerInterval: null },
+            { amount: 20, bonus: "🎁 Row 4 (+100 ETB)", timeLeft: null, timerInterval: null },
+            { amount: 30, bonus: "", timeLeft: null, timerInterval: null },
+            { amount: 50, bonus: "", timeLeft: null, timerInterval: null },
+            { amount: 80, bonus: "", timeLeft: null, timerInterval: null },
+            { amount: 100, bonus: "🎁 Row 1 (+200 ETB)", timeLeft: null, timerInterval: null },
+            { amount: 150, bonus: "", timeLeft: null, timerInterval: null },
+            { amount: 200, bonus: "", timeLeft: null, timerInterval: null },
+            { amount: 300, bonus: "🎁 Row 1 (+200 ETB)", timeLeft: null, timerInterval: null }
+        ];
+
+        function triggerStakeTimer(amount) {
+            let stakeItem = stakesData.find(s => s.amount === amount);
+            if (stakeItem) {
+                if (stakeItem.timeLeft === null || stakeItem.timeLeft <= 0) {
+                    stakeItem.timeLeft = 60;
+                    
+                    if (!stakeItem.timerInterval) {
+                        stakeItem.timerInterval = setInterval(() => {
+                            if (stakeItem.timeLeft > 0) {
+                                stakeItem.timeLeft--;
+                            } else {
+                                clearInterval(stakeItem.timerInterval);
+                                stakeItem.timerInterval = null;
+                                stakeItem.timeLeft = null;
+                            }
+                            
+                            if (document.getElementById('lobbyView').classList.contains('active')) {
+                                initLobby();
+                            }
+                            updateSelectorTimerDisplay();
+
+                            if (document.getElementById('waitingView').classList.contains('active') && chosenStake === stakeItem.amount) {
+                                if (stakeItem.timeLeft !== null) {
+                                    updateWaitingCountdownDisplay(stakeItem.timeLeft);
+                                }
+                                if (stakeItem.timeLeft === 0 || stakeItem.timeLeft === null) {
+                                    startGameSession();
+                                }
+                            }
+                        }, 1000);
+                    }
+                }
+            }
         }
+
+        function initLobby() {
+            let container = document.getElementById('stakeListContainer');
+            container.innerHTML = '';
+            
+            stakesData.forEach(item => {
+                let hasJoined = playerJoinedStakes[item.amount] ? 1 : 0;
+                let prizePool = item.amount * hasJoined;
+                
+                let statusText = "Waiting...";
+                let statusClass = "status-text";
+
+                if (item.timeLeft !== null && item.timeLeft > 0) {
+                    let mins = Math.floor(item.timeLeft / 60).toString().padStart(2, '0');
+                    let secs = (item.timeLeft % 60).toString().padStart(2, '0');
+                    statusText = `${mins}:${secs}`;
+                    statusClass = "status-text timer";
+                }
+                
+                let row = document.createElement('div');
+                row.className = 'stake-row';
+                row.innerHTML = `
+                    <div class="stake-info">
+                        <div class="stake-amount">${item.amount} birr</div>
+                        <div class="stake-bonus">${item.bonus}</div>
+                    </div>
+                    <div class="${statusClass}">${statusText}</div>
+                    <div class="win-amount">⬆ ${prizePool} Birr</div>
+                    <div>
+                        <button class="join-btn" onclick="selectStake(${item.amount})">Join &gt;&gt;</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateSelectorTimerDisplay() {
+            let stakeItem = stakesData.find(s => s.amount === chosenStake);
+            let timerBanner = document.getElementById('selectorTimerBanner');
+            if (stakeItem && stakeItem.timeLeft !== null && stakeItem.timeLeft > 0) {
+                let mins = Math.floor(stakeItem.timeLeft / 60).toString().padStart(2, '0');
+                let secs = (stakeItem.timeLeft % 60).toString().padStart(2, '0');
+                timerBanner.innerText = `Starts in: ${mins}:${secs}`;
+                timerBanner.style.display = 'block';
+            } else {
+                timerBanner.style.display = 'none';
+            }
+        }
+
+        function initSelector() {
+            let container = document.getElementById('cartelaContainer');
+            container.innerHTML = '';
+            for (let i = 1; i <= 150; i++) {
+                let btn = document.createElement('div');
+                btn.className = 'cartela-btn';
+                btn.innerText = i;
+                btn.onclick = () => loadCartela(i);
+                container.appendChild(btn);
+            }
+            updateSelectorTimerDisplay();
+        }
+
+        function selectStake(amount) {
+            chosenStake = amount;
+            document.getElementById('selectedStakeBanner').innerText = `Stake: ${amount} Birr`;
+            hideAllViews();
+            document.getElementById('selectorView').classList.add('active');
+            initSelector();
+        }
+
+        function showLobby() {
+            exitGameSession();
+        }
+
+        function showSelector() {
+            hideAllViews();
+            document.getElementById('selectorView').classList.add('active');
+            updateSelectorTimerDisplay();
+        }
+
+        function hideAllViews() {
+            document.getElementById('lobbyView').classList.remove('active');
+            document.getElementById('selectorView').classList.remove('active');
+            document.getElementById('previewView').classList.remove('active');
+            document.getElementById('waitingView').classList.remove('active');
+            document.getElementById('gameView').classList.remove('active');
+        }
+
+        async function loadCartela(id) {
+            let response = await fetch(`/api/cartela/${id}`);
+            let data = await response.json();
+            
+            if (data.grid) {
+                currentGridData = data.grid;
+                pendingCartelaId = id;
+
+                document.getElementById('previewStakeBadge').innerText = `${chosenStake} Birr Per Card`;
+                document.getElementById('previewCardTitle').innerText = `Card No. ${id}`;
+                
+                let previewContainer = document.getElementById('previewGrid');
+                previewContainer.innerHTML = '';
+                for (let r = 0; r < 5; r++) {
+                    for (let c = 0; c < 5; c++) {
+                        let val = currentGridData[r][c];
+                        let cell = document.createElement('div');
+                        cell.className = 'cell';
+                        if (val === "FREE") {
+                            cell.classList.add('marked');
+                            cell.innerText = "F";
+                        } else {
+                            cell.innerText = val;
+                        }
+                        previewContainer.appendChild(cell);
+                    }
+                }
+
+                hideAllViews();
+                document.getElementById('previewView').classList.add('active');
+            } else {
+                alert("Cartela not found!");
+            }
+        }
+
+        function confirmCardsAndJoin() {
+            playerJoinedStakes[chosenStake] = true;
+            triggerStakeTimer(chosenStake);
+
+            let stakeItem = stakesData.find(s => s.amount === chosenStake);
+
+            hideAllViews();
+            document.getElementById('waitingView').classList.add('active');
+            document.getElementById('waitingCardInfo').innerText = `Cartela #${pendingCartelaId} (${chosenStake} Birr Stake)`;
+            
+            updateWaitingCountdownDisplay(stakeItem.timeLeft !== null ? stakeItem.timeLeft : 60);
+        }
+
+        function updateWaitingCountdownDisplay(timeLeft) {
+            let mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let secs = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('waitingCountdownDisplay').innerText = `${mins}:${secs}`;
+        }
+
+        function startGameSession() {
+            document.getElementById('cardTitle').innerText = `Cartela #${pendingCartelaId} (${chosenStake} Birr Stake)`;
+            hideAllViews();
+            document.getElementById('gameView').classList.add('active');
+            renderMasterBoard([]);
+            renderGrid([]);
+
+            if (gameInterval) clearInterval(gameInterval);
+
+            gameInterval = setInterval(() => {
+                callNextNumberAutomatic();
+            }, 2500);
+        }
+
+        function exitGameSession() {
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                gameInterval = null;
+            }
+            playerJoinedStakes = {}; 
+            
+            hideAllViews();
+            document.getElementById('lobbyView').classList.add('active');
+            initLobby();
+        }
+
+        function renderMasterBoard(calledNumbers = []) {
+            let masterContainer = document.getElementById('masterBoardGrid');
+            masterContainer.innerHTML = '';
+
+            for (let i = 1; i <= 99; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'master-cell';
+                cell.innerText = i;
+                if (calledNumbers.includes(i) || calledNumbers.includes(String(i))) {
+                    cell.classList.add('drawn');
+                }
+                masterContainer.appendChild(cell);
+            }
+        }
+
+        function renderGrid(calledNumbers = []) {
+            let gridContainer = document.getElementById('bingoGrid');
+            gridContainer.innerHTML = '';
+
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    let val = currentGridData[r][c];
+                    let cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.innerText = val;
+
+                    if (val === "FREE" || calledNumbers.includes(val)) {
+                        cell.classList.add('marked');
+                    }
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        async function callNextNumberAutomatic() {
+            let response = await fetch('/api/call_number', { method: 'POST' });
+            let data = await response.json();
+
+            if (data.called_number) {
+                document.getElementById('calledDisplay').innerText = `Latest Called: ${data.called_number} (Total: ${data.total_called})`;
+                renderGrid(data.history);
+                renderMasterBoard(data.history);
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            } else {
+                if (gameInterval) {
+                    clearInterval(gameInterval);
+                    gameInterval = null;
+                }
+            }
+        }
+
+        function claimBingo() {
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                gameInterval = null;
+            }
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            alert("🎉 BINGO Claimed Successfully! Checking your win...");
+            exitGameSession();
+        }
+
+        initLobby();
     </script>
 </body>
 </html>
